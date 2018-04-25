@@ -19,5 +19,12 @@
   "bugs": {
     "url": "https://github.com/hylerrix/baidu-ife/issues"
   },
-  "homepage": "https://github.com/hylerrix/baidu-ife#readme"
+  "homepage": "https://github.com/hylerrix/baidu-ife#readme",
+  "dependencies": {
+    "san": "^3.5.7",
+    "san-router": "^1.2.0"
+  },
+  "devDependencies": {
+    "babel-preset-env": "^1.6.1"
+  }
 }

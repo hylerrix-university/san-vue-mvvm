@@ -1,5 +1,26 @@
 <html>
     <body>
-        <script src="./index.js"></script>
+        <div id="app">
+
+        </div>
+        <script src="https://unpkg.com/san@latest/dist/san.dev.js"></script>
+        <script>
+            const HelloWorld = san.defineComponent({
+                template: `
+                <div>
+                    <input type="text" value="{= name =}">
+                    <p>Hello {{name}}!</p>
+                </div>
+            `
+            });
+
+            let myApp = new HelloWorld({
+                data: {
+                    name: 'San'
+                }
+            });
+
+            myApp.attach(document.body);
+        </script>
     </body>
 </html>
