@@ -5,7 +5,7 @@
 ## MVVM 学院
 
 * [1.1 课程系列引导及准备工作](2018/MVVM/1-1/)
-* 1.2 用webpack4 / parcel快速搭建开发san helloworld
+* [1.2 用 Webpack4 / Parcel 快速搭建开发 san helloworld](2018/MVVM/1-2/)
 * 2.1 数据操作
 * 2.2 条件和循环
 * 2.3 样式控制
