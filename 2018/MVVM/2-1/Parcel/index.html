@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <div id="app"></div>
+    <script src="https://unpkg.com/san@latest/dist/san.dev.js"></script>
+    <script>
+        const MyForm = san.defineComponent({
+            template: `
+                <div>
+                    <div>
+                        <input type="text" value="{= name =}">
+                        <input type="text" value="{= age =}">
+                        <input type="text" value="{= des =}">
+                    </div>
+                    <div>
+                        <p><b>信息：</b> <button on-click="removeData">移除信息</button></p>
+                    </div>
+                    <div>
+                        <p>姓名：{{ name }}</p>
+                        <p>年龄：{{ age }}</p>
+                        <p>简介：{{ des }}</p>
+                    </div>
+                </div>
+            `,
+            initData: function () {
+                return {
+                    name: 'hylerrix',
+                    age: 21,
+                    des: 'github.com/hylerrix'
+                }
+            },
+            removeData: function () {
+                var name = this.data.set('name', '')
+                var age = this.data.set('age', '')
+                var des = this.data.set('des', '')
+            }
+        });
+
+        // 初始化组件对象
+        let myForm = new MyForm()
+        myForm.attach(document.body);
+    </script>
+</body>
+</html>
