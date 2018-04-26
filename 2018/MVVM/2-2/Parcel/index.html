@@ -8,7 +8,63 @@
     <div id="app"></div>
     <script src="https://unpkg.com/san@latest/dist/san.dev.js"></script>
     <script>
+        const MyTable = san.defineComponent({
+            template: `
+                <div>
+                    <p><button on-click="addStudent">添加</button></p>
+                    <table border="1">
+                        <tr>
+                            <th>姓名</th>
+                            <th>审核状态</th>
+                            <th>操作</th>
+                        </tr>
+                        <tr s-for="student, index in students">
+                            <td>{{ student.name }}</td>
+                            <template>
+                                <td s-if="student.status === 0">待审核</td>
+                                <td s-elif="student.status === 1">不合格</td>
+                                <td s-else="student.status === 2">合格</td>
+                            </template>
+                            <template>
+                                <td s-if="student.status === 0"><button on-click="reviewStudent(index)">审核</button></td>
+                                <td s-if="student.status !== 0"><button on-click="removeStudent(index)">删除</button></td>
+                            </template>
+                        </tr>
+                    </table>
+                </div>
+            `,
+            initData: function () {
+                return {
+                    students: [
+                        { name: '张三', status: 2 },
+                        { name: '李四', status: 1 },
+                        { name: '王五', status: 0 },
+                        { name: '赵六', status: 0 },
+                        { name: '孙七', status: 0 }
+                    ]
+                }
+            },
+            // 新增学生
+            addStudent: function () {
+                var name = prompt('请输入新学生名字')
+                this.data.push('students', {
+                    name: name,
+                    status: 0
+                })
+            },
+            // 删除学生
+            removeStudent: function (index) {
+                this.data.removeAt('students', index)
+            },
+            // 审核学生
+            reviewStudent: function (index) {
+                this.data.set('students[' + index + '].status', 2)
+            }
+        });
 
+        // 初始化组件对象
+        let myTable = new MyTable()
+        myTable.attach(document.body);
     </script>
 </body>
 </html>
