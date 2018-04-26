@@ -1,0 +1,27 @@
+{
+  "name": "baidu-ife",
+  "version": "1.0.0",
+  "description": "![](./ife.png)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "parcel index.html",
+    "dev": "npm run start",
+    "build": "parcel build index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hylerrix/baidu-ife.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hylerrix/baidu-ife/issues"
+  },
+  "homepage": "https://github.com/hylerrix/baidu-ife#readme",
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}
