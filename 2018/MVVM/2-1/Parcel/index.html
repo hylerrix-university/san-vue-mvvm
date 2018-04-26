@@ -8,6 +8,7 @@
     <div id="app"></div>
     <script src="https://unpkg.com/san@latest/dist/san.dev.js"></script>
     <script>
+        let { DataTypes } = san
         const MyForm = san.defineComponent({
             template: `
                 <div>
@@ -26,6 +27,11 @@
                     </div>
                 </div>
             `,
+            dataTypes: {
+                name: DataTypes.string,
+                age: DataTypes.number,
+                des: DataTypes.string
+            },
             initData: function () {
                 return {
                     name: 'hylerrix',
@@ -35,7 +41,7 @@
             },
             removeData: function () {
                 var name = this.data.set('name', '')
-                var age = this.data.set('age', '')
+                var age = this.data.set('age', NaN)
                 var des = this.data.set('des', '')
             }
         });
