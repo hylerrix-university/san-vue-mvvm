@@ -86,6 +86,46 @@
                 opacity: 0.9;
                 display: inline-block;
             }
+
+            /* checkbox */
+            label {
+                display: inline-block;
+            }
+            input[type="checkbox"] {
+                display: none;
+                margin: 0;
+            }
+            input[type="checkbox"] + label span {
+                display: inline-block;
+                height: 35px;
+                /* set the text and checkbox to be the same height  */
+                vertical-align: middle;
+                line-height: 2rem;
+            }
+            input[type="checkbox"] + label span.checkbox {
+                background: url('unchecked.svg');
+                background-size: contain;
+                opacity: 0.5;
+                width: 35px;
+            }
+            input[type="checkbox"]:checked + label span.checkbox {
+                background: url('checked.svg');
+                background-size: contain;
+            }
+            input[type="checkbox"]:indeterminate + label span.checkbox {
+                background: url('indeterminate.svg');
+                background-size: contain;
+            }
+            input[type="checkbox"]:disabled + label span.checkbox {
+                opacity: 0.2;
+            }
+            .sub {
+                margin-left: 35px;
+            }
+            .text {
+                margin-left: 4px;
+                color: #505050;
+            }
         </style>
     </head>
     <body>
@@ -103,6 +143,7 @@
                 `,
             })
 
+            // 自定义的 input 组件
             const SanInput = san.defineComponent({
                 // props: value, placeholder, disabled, readonly
                 template: `
@@ -130,7 +171,6 @@
                         isValid: true, // @isValid, type:boolean, default:true, if user input is valid
                         alert: undefined, // @alert, type:string, default:undefined
                         isFocused: false, // @isFocused, type:boolean, default:false
-                        // isNotValidAndIsFocused: false, // !isValid && isFocused
                         instruction: undefined // @instruction, type:string, default:undefined
                     }
                 },
@@ -169,10 +209,7 @@
                 }
             })
 
-            const SanCheckbox = san.defineComponent({
-
-            })
-
+            // 用来最终 UI 展示的 input 模块
             const InputBox = san.defineComponent({
                 components: {
                     'box-header': BoxHeader,
@@ -229,15 +266,149 @@
                 }
             })
 
+            // 自定义的多选框组件
+            const SanCheckbox = san.defineComponent({
+                components: {
+                    'san-checkbox': this
+                },
+                template: `
+                    <div>
+                        <input
+                            type="checkbox"
+                            id="{{ id + '_checkbox' }}"
+                            on-change="handleChange($event)"
+                            checked="{= isChecked =}"
+                            disabled="{= disabled =}" />
+                        <label for="{{ id + '_checkbox' }}">
+                            <span class="checkbox"></span>
+                            <span class="text" s-if="text">{{ text }}</span>
+                        </label>
+                        <div class="sub">
+                            <slot></slot>
+                        </div>
+                    </div>
+                `,
+                messages: {
+                    // get message from sub checkbox item and update
+                    // issue: cannot use arrorw function here
+                    'UI:checkbox-item-checked': function (msg) {
+                        let checked = msg.value;
+                        let subItems = this.data.get('subItems');
+                        // default indeterminate status
+                        this._setIndeterminate(false);
+                        // console.log(this.data.raw.text, subItems.length);
+                        if (subItems.length > 0) {
+                            let checked_item_num = 0;
+                            if (checked === 'indeterminate') {
+                                this._setIndeterminate(true);
+                                this.dispatch('UI:checkbox-item-checked', 'indeterminate');
+                                return;
+                            }
+                            // 每次都做所有subitem的判断性能不好，有没有更优算法？
+                            subItems.map(i => {
+                                console.log(i.data.get('isChecked'));
+                                if (i._getIndeterminate()) {
+                                    this._setIndeterminate(true);
+                                    return;
+                                }
+                                if (i.data.get('isChecked')) {
+                                    checked_item_num++;
+                                }
+                            });
+                            if (checked_item_num === subItems.length) {
+                                this.data.set('isChecked', true);
+                                this.dispatch('UI:checkbox-item-checked', true);
+                            } else if (checked_item_num === 0) {
+                                this.data.set('isChecked', false);
+                                this.dispatch('UI:checkbox-item-checked', false);
+                            } else {
+                                this.data.set('isChecked', false);
+                                this._setIndeterminate(true);
+                                this.dispatch('UI:checkbox-item-checked', 'indeterminate');
+                            }
+                        }
+                    }
+                },
+                initData() {
+                    return {
+                        //@subItemNum, type: Array<<san-checkbox>Component>[], init: []
+                        // items of the checkbox
+                        subItems: [],
+                        //@isChecked, type: boolean, init: false
+                        isChecked: false,
+                        //@disabled, type: boolean, init: false
+                        disabled: false
+                    }
+                },
+                attached() {
+                    // update sub item number data
+                    this.slot()[0].children.map((i) => {
+                        if (i.subTag === 'san-checkbox') {
+                            this.data.push('subItems', i);
+                        }
+                    })
+                    // console.log(this.data.get('subItems'));
+                    // console.log(this.data.get('id'), this.slot()[0].aNode.children);
+                },
+                handleChange(e) {
+                    // fix the difference between Safari and Chrome
+                    this.data.set('isChecked', e.target.checked);
+                    // judge if it is checked
+                    // console.log(e.target.checked);
+                    // notify parent component to update sub item numbers
+                    this.dispatch('UI:checkbox-item-checked', e.target.checked);
+                    // console.log(this.slot()[0].children);
+                    // if checked, make all the sub items checked also
+                    if (this.data.get('isChecked')) {
+                        this._setAllChildren(this, true);
+                        this.data.set('checkedItemNum', this.data.get('subItemNum'));
+                        // if unchecked, make all the sub items unchecked also
+                    } else {
+                        this._setAllChildren(this, false);
+                        this.data.set('checkedItemNum', 0);
+                    }
+                },
+                _setAllChildren(Component, boolean) {
+                    Component.slot()[0].children.map((i)=> {
+                        if (i.subTag === 'san-checkbox') {
+                            i._setIndeterminate(false);
+                            i.data.set('isChecked', boolean);
+                            this._setAllChildren(i, boolean);
+                        }
+                    });
+                },
+                _setIndeterminate(boolean) {
+                    document.getElementById(this.data.get('id') + '_checkbox').indeterminate = boolean;
+                },
+                _getIndeterminate() {
+                    return document.getElementById(this.data.get('id') + '_checkbox').indeterminate;
+                }
+            })
+
             const CheckBox = san.defineComponent({
                 components: {
-                    'box-header': BoxHeader
+                    'box-header': BoxHeader,
+                    'san-checkbox': SanCheckbox
                 },
                 template: `
                     <div>
                         <box-header san-ref="son"></box-header>
                         <div id="checkBox" class="boxMain">
-                            checkBox
+                            <san-checkbox id="name" text="这里是父级多选框"></san-checkbox>
+                            <san-checkbox id="dishes" text="选择食材" s-ref="checkbox">
+                                <san-checkbox id="dishes_chicken" text="鸡肉"></san-checkbox>
+                                <san-checkbox id="dishes_pork" text="猪肉"></san-checkbox>
+                                <san-checkbox id="dishes_fish" text="鱼肉">
+                                    <san-checkbox id="dishes_fish1" text="鲫鱼"></san-checkbox>
+                                    <san-checkbox id="dishes_fish2" text="鲤鱼"></san-checkbox>
+                                    <san-checkbox id="dishes_fish3" text="鲶鱼"></san-checkbox>
+                                </san-checkbox>
+                                <san-checkbox id="dishes_vegatable" text="蔬菜"></san-checkbox>
+                            </san-checkbox>
+                            <san-checkbox id="name2" disabled text="不可以点选">
+                                <san-checkbox id="name3" text="可以点选"></san-checkbox>
+                                <san-checkbox id="name4" text="可以点选"></san-checkbox>
+                            </san-checkbox>
                         </div>
                     </div>
                 `,
