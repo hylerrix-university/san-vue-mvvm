@@ -1,0 +1,278 @@
+<html>
+    <head>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            .boxHeader {
+                height: 155px;
+                width: auto;
+                background-color: #5c5c5c;
+                padding-top: 32.75px;
+                padding-left: 25px;
+            }
+            
+            .boxHeader h1 {
+                color: #ffffff;
+                font-weight: normal;
+            }
+            
+            .boxHeader p {
+                color: #929292;
+            }
+
+            .boxMain {
+                height: auto;
+                box-sizing: border-box;
+                padding: 25px;
+            }
+
+            #inputBox input {
+                width: 100%;
+                font-size: 12px;
+                padding: 4px;
+                border: 1px solid #ccc;
+                transition: 0.3s all;
+                box-sizing: border-box;
+            }
+
+            .inputWrap {
+                display: flex;
+                margin: 7px 0;
+            }
+
+            .inputWrap * {
+                flex: 1;
+            }
+
+            /* san-input */
+
+            .input {
+                position: relative;
+            }
+
+            input:disabled {
+                background-color: #f7f7f7;
+            }
+
+            input:hover {
+                border: 1px solid blue;
+            }
+
+            input:focus {
+                /* remove default Apple OS X blue outline */
+                outline: none;
+                border: 1px solid blue;
+            }
+
+            .alert {
+                color: red;
+                font-size: 8px;
+                display: inline-block;
+            }
+
+            .instruction {
+                position: absolute;
+                bottom: 100%;
+                width: 100%;
+                left: 0;
+                background: #fff2f2;
+                color: #d66666;
+                font-size: 8px;
+                box-sizing: border-box;
+                padding: 8px;
+                opacity: 0.9;
+                display: inline-block;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="https://unpkg.com/san@latest/dist/san.dev.js"></script>
+        <script>
+            // BoxHeader 同时被 InputBox 和 CheckBox 作为子组件
+            // 父组件向子组件传递值的方式见 https://baidu.github.io/san/practice/parent-to-child/
+            // 这里使用 ref，让父组件拿到子组件的实例，直接操作子组件实例的数据
+            const BoxHeader = san.defineComponent({
+                template: `
+                    <div class="boxHeader">
+                        <h1>{{ title }}</h1>
+                        <p>{{ intro }}</p>
+                    </div>
+                `,
+            })
+
+            const SanInput = san.defineComponent({
+                // props: value, placeholder, disabled, readonly
+                template: `
+                    <div class="input">
+                        <input
+                            value="{= value =}"
+                            placeholder="{{ placeholder }}"
+                            disabled="{{ disabled }}"
+                            readonly="{{ readonly }}"
+                            on-input="handleInput($event)"
+                            on-focus="handleFocus($event)"
+                            on-blur="handleBlur($event)"
+                        />
+                        <span s-if="!isValid" class="alert">{{ alert }}</span>
+                        <span s-if="!isValid" class="instruction">{{ instruction }}</span>
+                    </div>
+                `,
+                initData: function () {
+                    return {
+                        placeholder: undefined, // @placeholder, type:string, default:undefined
+                        disabled: false, // @disabled, type:boolean, default:false
+                        readonly: false, // @readonly, type:boolean, default:false
+                        value: undefined, // @value, type:string, default:undefined
+                        validate: undefined, // @validate, type:string, default:undefined
+                        isValid: true, // @isValid, type:boolean, default:true, if user input is valid
+                        alert: undefined, // @alert, type:string, default:undefined
+                        isFocused: false, // @isFocused, type:boolean, default:false
+                        // isNotValidAndIsFocused: false, // !isValid && isFocused
+                        instruction: undefined // @instruction, type:string, default:undefined
+                    }
+                },
+                handleInput: function (msg) {
+                    this.fire('input', msg)
+                },
+                handleFocus: function (msg) {
+                    this.fire('focus', msg)
+                    // 设置状态为 获得聚焦
+                    this.data.set('isFocused', true);
+                },
+                handleBlur: function (msg) {
+                    this.fire('blur', msg)
+                    // 设置状态为 失去焦点
+                    this.data.set('isFocused', false);
+                    this.data.set('isValid', true);
+                    // 如果数据为空，不作判断
+                    if (this.data.get('value') === "" || this.data.get('value') === undefined) {
+                        return;
+                    }
+                    // 判断检验类型，普通类型 or 邮箱格式
+                    if (this.data.get('validate') !== undefined) {
+                        const validateStr = this.data.get('validate');
+                        const userInput = this.data.get('value');
+                        switch (validateStr.toLowerCase()) {
+                            // 如果需要是邮箱格式
+                            case 'email':
+                                if (!/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(userInput)){
+                                    this.data.set('isValid', false);
+                                    this.data.set('alert', '请输入正确的邮箱！');
+                                    this.data.set('instruction', '电子邮箱一般格式为：mailname@mailaddress.com');
+                                }
+                                break;
+                        }
+                    }
+                }
+            })
+
+            const SanCheckbox = san.defineComponent({
+
+            })
+
+            const InputBox = san.defineComponent({
+                components: {
+                    'box-header': BoxHeader,
+                    'san-input': SanInput
+                },
+                template: `
+                    <div>
+                        <box-header san-ref="son"></box-header>
+                        <div id="inputBox" class="boxMain">
+                            <div class="inputWrap">
+                                <label for="normal">打印打印每一次输入</label>
+                                <san-input placeholder="请输入文字，在控制台查看" on-input="handleInput($event)"></san-input>
+                            </div>
+                            <div class="inputWrap">
+                                <label for="normal">失去焦点时判断格式提示错误文案</label>
+                                <san-input
+                                    placeholder="请输入邮箱号"
+                                    validate="email"
+                                    on-focus="handleFocus($event)"
+                                    on-blur="handleBlur($event)">
+                                </san-input>
+                            </div>
+                            <div class="inputWrap">
+                                <label for="normal">不可输入</label>
+                                <san-input value="{{ disabledMsg }}" placeholder="请输入文字" disabled></san-input>
+                            </div>
+                            <div class="inputWrap">
+                                <label for="normal">只读</label>
+                                <san-input value="{{ readonlyMsg }}" placeholder="请输入文字" readonly></san-input>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                initData: function () {
+                    return {
+                        title: '输入框',
+                        intro: '待补充',
+                        disabledMsg: '不可输入区域',
+                        readonlyMsg: '这里是只读区域'
+                    }
+                },
+                attached: function () {
+                    this.ref('son').data.set('title', this.data.get('title'));
+                    this.ref('son').data.set('intro', this.data.get('intro'));
+                },
+                handleInput: function (msg) {
+                    console.log(msg.data)
+                },
+                handleFocus: function (msg) {
+                    console.log('获得焦点！')
+                },
+                handleBlur: function (msg) {
+                    console.log('失去焦点！')
+                }
+            })
+
+            const CheckBox = san.defineComponent({
+                components: {
+                    'box-header': BoxHeader
+                },
+                template: `
+                    <div>
+                        <box-header san-ref="son"></box-header>
+                        <div id="checkBox" class="boxMain">
+                            checkBox
+                        </div>
+                    </div>
+                `,
+                initData: function () {
+                    return {
+                        title: '复选框',
+                        intro: '复选框用于在两个或两个以上有清晰差别的选项中进行选择'
+                    }
+                },
+                attached: function () {
+                    this.ref('son').data.set('title', this.data.get('title'));
+                    this.ref('son').data.set('intro', this.data.get('intro'));
+                }
+            })
+
+            const App = san.defineComponent({
+                components: {
+                    'input-box': InputBox,
+                    'check-box': CheckBox
+                },
+                template: `
+                    <div id="app">
+                        <input-box></input-box>
+                        <check-box></check-box>
+                    </div>
+                `,
+                initData: function () {
+                    return {
+                    }
+                }
+            })
+
+            // 初始化组件对象
+            let app = new App()
+            app.attach(document.body);
+        </script>
+    </body>
+</html>
